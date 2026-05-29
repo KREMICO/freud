@@ -15,7 +15,7 @@ export default function QuestionPage() {
 
   const section = sectionRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  const { pontos, ganharPonto, avancarProgresso } = useGame();
+  const { pontos, ganharPonto, avancarProgresso, concluirFase } = useGame();
 
   const perguntas = perguntasPorFase[section];
 
@@ -45,6 +45,7 @@ export default function QuestionPage() {
     if (question + 1 < perguntas.length) {
       router.push(`/questions/${section}/${question + 1}`);
     } else {
+      concluirFase(section);
       avancarProgresso();
       router.push("/brain");
     }

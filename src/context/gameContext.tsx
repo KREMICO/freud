@@ -11,14 +11,25 @@ type GameContextType = {
   ganharPonto: () => void;
   avancarProgresso: () => void;
   resetarJogo: () => void;
+  fasesConcluidas: string[];
+concluirFase: (fase: string) => void;
 };
 
 const GameContext = createContext<GameContextType | null>(null);
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
+  const [fasesConcluidas, setFasesConcluidas] = useState<string[]>([]);
+
+
   const [pontos, setPontos] = useState(0);
   const [progresso, setProgresso] = useState(0);
   const [faseAtual, setFaseAtual] = useState<string | null>(null);
+
+  function concluirFase(fase: string) {
+  setFasesConcluidas((prev) =>
+    prev.includes(fase) ? prev : [...prev, fase]
+  );
+}
 
   function ganharPonto() {
     setPontos((prev) => prev + 1);
@@ -44,6 +55,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         ganharPonto,
         avancarProgresso,
         resetarJogo,
+        fasesConcluidas,
+        concluirFase,
       }}
     >
       {children}
