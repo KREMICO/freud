@@ -1,17 +1,23 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
+import {
+  criarPerguntasDaPartida,
+  type FaseId,
+  type PerguntasDaPartida,
+} from "@/lib/questions";
 
 type GameContextType = {
   pontos: number;
   progresso: number;
-  faseAtual: string | null;
-  fasesConcluidas: string[];
-
-  setFaseAtual: (fase: string | null) => void;
+  faseAtual: FaseId | null;
+  fasesConcluidas: FaseId[];
+  perguntasDaPartida: PerguntasDaPartida;
+  totalPerguntas: number;
+  setFaseAtual: (fase: FaseId | null) => void;
+  iniciarJogo: () => void;
   ganharPonto: () => void;
-  avancarProgresso: () => void;
-  concluirFase: (fase: string) => void;
+  concluirFase: (fase: FaseId) => void;
   resetarJogo: () => void;
 };
 
@@ -19,58 +25,40 @@ const GameContext = createContext<GameContextType | null>(null);
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [pontos, setPontos] = useState(0);
-  const [progresso, setProgresso] = useState(0);
-  const [faseAtual, setFaseAtual] = useState<string | null>(null);
-  const [fasesConcluidas, setFasesConcluidas] = useState<string[]>([]);
+  const [faseAtual, setFaseAtual] = useState<FaseId | null>(null);
+  const [fasesConcluidas, setFasesConcluidas] = useState<FaseId[]>([]);
+  const [perguntasDaPartida, setPerguntasDaPartida] =
+    useState<PerguntasDaPartida>(() => criarPerguntasDaPartida());
+  const progresso = fasesConcluidas.length;
 
-  // 🔥 CARREGAR do localStorage
-  useEffect(() => {
-    const data = localStorage.getItem("game");
+  const totalPerguntas = useMemo(
+    () =>
+      Object.values(perguntasDaPartida).reduce(
+        (total, perguntas) => total + perguntas.length,
+        0
+      ),
+    [perguntasDaPartida]
+  );
 
-    if (data) {
-      const parsed = JSON.parse(data);
-
-      setPontos(parsed.pontos || 0);
-      setProgresso(parsed.progresso || 0);
-      setFaseAtual(parsed.faseAtual || null);
-      setFasesConcluidas(parsed.fasesConcluidas || []);
-    }
-  }, []);
-
-  // 🔥 SALVAR no localStorage
-  useEffect(() => {
-    localStorage.setItem(
-      "game",
-      JSON.stringify({
-        pontos,
-        progresso,
-        faseAtual,
-        fasesConcluidas,
-      })
-    );
-  }, [pontos, progresso, faseAtual, fasesConcluidas]);
+  function iniciarJogo() {
+    setPontos(0);
+    setFaseAtual(null);
+    setFasesConcluidas([]);
+    setPerguntasDaPartida(criarPerguntasDaPartida());
+  }
 
   function ganharPonto() {
     setPontos((prev) => prev + 1);
   }
 
-  function avancarProgresso() {
-    setProgresso((prev) => prev + 1);
-  }
-
-  function concluirFase(fase: string) {
+  function concluirFase(fase: FaseId) {
     setFasesConcluidas((prev) =>
       prev.includes(fase) ? prev : [...prev, fase]
     );
   }
 
   function resetarJogo() {
-    setPontos(0);
-    setProgresso(0);
-    setFaseAtual(null);
-    setFasesConcluidas([]);
-
-    localStorage.removeItem("game");
+    iniciarJogo();
   }
 
   return (
@@ -80,9 +68,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         progresso,
         faseAtual,
         fasesConcluidas,
+        perguntasDaPartida,
+        totalPerguntas,
         setFaseAtual,
+        iniciarJogo,
         ganharPonto,
-        avancarProgresso,
         concluirFase,
         resetarJogo,
       }}
